@@ -545,7 +545,7 @@ int main(int argc, char *argv[])
 	argc--;
 	
 	printf("PATH_MAX is:%d\n",PATH_MAX);
-	fuse_stat = fuse_main(argc, argv, &hello_oper, NULL);
+	fuse_stat = fuse_main(argc, argv, &hello_oper, data);
 	return fuse_stat;
 }
 
