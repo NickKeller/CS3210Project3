@@ -1,7 +1,7 @@
 all:
-	mkdir ../rootdir
-	mkdir ../mountdir
-	gcc -Wall hello.c `pkg-config fuse --cflags --libs` -o hello
+	mkdir -p ../rootdir
+	mkdir -p ../mountdir
+	gcc -Wall pfs.c `pkg-config fuse --cflags --libs` -o pfs
 
 clean:
-	rm -f hello
+	rm -f pfs
