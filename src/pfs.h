@@ -17,7 +17,6 @@
 struct state {
     FILE *logfile;
     char *rootdir;
-    int mountNum;
 };
 
 char* mapNameToDrives(const char* path);

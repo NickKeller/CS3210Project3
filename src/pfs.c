@@ -30,6 +30,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+static char* backups[];
+static char* backup1;
+static char* backup2;
+static char* backup3;
+static char* backup4;
+
 char* mapNameToDrives(const char* path){
 	log_msg("Entered mapNameToDrives, path is: %s\n",path);
 	return "ABCDE";
@@ -126,26 +132,20 @@ int pfs_mkdir(const char* path, mode_t mode){
 	log_msg("Entered pfs_mkdir\n");
 	int retstat = 0;
 	char fpath[PATH_MAX];
-	
+	log_msg("Making dir: %s\n",path);
 	pfs_fullpath(fpath, path);
 	retstat = mkdir(fpath,mode);	
 	
 	//backup
-	log_msg("Making dir: %s\n",path);
-/*	char* drives = mapNameToDrives(path);
-	for(int i = 0; i < strlen(drives); i++){
-		char* newpath = calloc(PATH_MAX,sizeof(char));
-		strcpy(newpath,PRI_DATA->backupdir);
-		log_msg("path is %s\n",newpath);
-		strncat(newpath,"/",1);
-		log_msg("path is %s\n",newpath);
-		strncat(newpath,&drives[i],1);
-		log_msg("path is %s\n",newpath);
-		strncat(newpath,path,strlen(path));
-		log_msg("path is %s\n",newpath);
-		mkdir(newpath,mode);
-	}*/
-	
+	log_msg("Trying to write to backups\n");
+	char fpath2[PATH_MAX];
+	strcpy(fpath2,backup1);
+	strncat(fpath2,path,strlen(path));
+	int res2 = mkdir(fpath2,mode);
+	if(res2 < 0){
+		pfs_error("pfs_mkdir on Backup/F");
+	}
+	log_msg("fpath2:%s\n",fpath2);	
 	if(retstat < 0){
 		retstat = pfs_error("pfs_mkdir mkdir");
 	}
@@ -601,59 +601,6 @@ struct fuse_operations pfs_oper = {
   .fgetattr = pfs_fgetattr
 };
 
-
-struct fuse *setup_common(int argc, char *argv[],
-			       const struct fuse_operations *op,
-			       size_t op_size,
-			       char **mountpoint,
-			       int *multithreaded,
-			       int *fd,
-			       void *user_data,
-			       int compat)
-{
-	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
-	struct fuse_chan *ch;
-	struct fuse *fuse;
-	int foreground;
-	int res;
-
-	res = fuse_parse_cmdline(&args, mountpoint, multithreaded, &foreground);
-	if (res == -1)
-		return NULL;
-
-	ch = fuse_mount(*mountpoint, &args);
-	if (!ch) {
-		fuse_opt_free_args(&args);
-		goto err_free;
-	}
-	fprintf(stderr, "Calling fuse_new\n");
-	fuse = fuse_new(ch, &args, op, op_size, user_data);
-	fuse_opt_free_args(&args);
-	if (fuse == NULL)
-		goto err_unmount;
-	fprintf(stderr, "calling fuse_daemonize\n");
-	res = fuse_daemonize(foreground);
-	if (res == -1)
-		goto err_unmount;
-	fprintf(stderr, "calling set_signal_handlers\n");
-	res = fuse_set_signal_handlers(fuse_get_session(fuse));
-	if (res == -1)
-		goto err_unmount;
-
-	if (fd)
-		*fd = fuse_chan_fd(ch);
-	fprintf(stderr, "returning fuse\n");
-	return fuse;
-
-err_unmount:
-	fuse_unmount(*mountpoint, ch);
-	if (fuse)
-		fuse_destroy(fuse);
-err_free:
-	free(*mountpoint);
-	return NULL;
-}
-
 int main(int argc, char *argv[])
 {
 	if(argc < 3){
@@ -661,12 +608,21 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	struct state* data = calloc(1,sizeof(struct state));
-//	struct state* data2 = calloc(1,sizeof(struct state));
 	
 	data->rootdir = realpath(argv[argc-2], NULL);
     argv[argc-2] = argv[argc-1];
     argv[argc-1] = NULL;
     argc--;
+    
+    backup1 = realpath("../backup/B/",NULL);
+    backup2 = realpath("../backup/C/",NULL);
+    backup3 = realpath("../backup/D/",NULL);
+    backup4 = realpath("../backup/E/",NULL);
+    
+    printf("Backup1 is:%s\n",backup1);
+    printf("Backup2 is:%s\n",backup2);
+    printf("Backup3 is:%s\n",backup3);
+    printf("Backup4 is:%s\n",backup4);
 	
 	printf("MountDir is: %s\n",argv[argc-1]);
 	
@@ -680,63 +636,6 @@ int main(int argc, char *argv[])
 	data->logfile = log_open("pfs.log");
 	
 	fprintf(stderr,"About to call fuse_main\n");
+	return fuse_main(argc,argv,&pfs_oper,data);
 	
-	
-	struct fuse *fuse1;
-//	struct fuse* fuse2;
-	char *mountpoint1;
-//	char* mountpoint2;
-	int multithreaded1;
-//	int multithreaded2;
-	int res1;
-//	int res2;
-	
-/*	char* argv2[] = {"./pfs",realpath("~/MyPFS2",NULL)};
-	data2->rootdir = realpath("../backup/B/",NULL);
-	data2->logfile = log_open("pfs2.log");*/
-	
-	
-	fuse1 = setup_common(argc, argv, &pfs_oper, sizeof(pfs_oper), &mountpoint1,
-				 &multithreaded1, NULL, data, 0);
-	//fuse2 = setup_common(argc, argv2, &pfs_oper, sizeof(pfs_oper), &mountpoint2,
-	//			 &multithreaded2, NULL, data2, 0);
-	if (fuse1 == NULL)// || fuse2 == NULL)
-		return 1;
-
-	fprintf(stderr,"About to start fuse_loop1\n");
-	if (multithreaded1)
-		res1 = fuse_loop_mt(fuse1);
-	else
-		res1 = fuse_loop(fuse1);
-/*	fprintf(stderr,"About to start fuse_loop2\n");
-	if (multithreaded2)
-		res2 = fuse_loop_mt(fuse2);
-	else
-		res2 = fuse_loop(fuse2);*/
-
-	fuse_teardown(fuse1, mountpoint1);
-	//fuse_teardown(fuse2, mountpoint2);
-	if (res1 == -1)// || res2 == -1)
-		return 1;
-
-	return 0;
-	/*char* test1[] = {"./pfs","../test1/"};
-	char* test2[] = {"./pfs","../test2/"};
-	char* test3[] = {"./pfs","../test3/"};
-	fuse_stat = fuse_main(argc, argv, &pfs_oper, data);
-	fprintf(stderr,"About to call fuse_main\n");
-	fuse_stat = fuse_main(argc, test1, &pfs_oper, data);
-	fprintf(stderr,"About to call fuse_main\n");
-	fuse_stat = fuse_main(argc, test2, &pfs_oper, data);*/
-	/*fprintf(stderr,"About to call fuse_main\n");
-	int fuse_stat = fuse_main(argc, argv, &pfs_oper, data);*/
-	//return fuse_stat;
 }
-
-
-
-
-
-
-
-
