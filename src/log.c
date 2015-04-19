@@ -23,13 +23,13 @@
 
 #include "log.h"
 
-FILE *log_open()
+FILE *log_open(char* filename)
 {
     FILE *logfile;
     
     // very first thing, open up the logfile and mark that we got in
     // here.  If we can't open the logfile, we're dead.
-    logfile = fopen("pfs.log", "w");
+    logfile = fopen(filename, "w");
     if (logfile == NULL) {
 	perror("logfile");
 	exit(EXIT_FAILURE);

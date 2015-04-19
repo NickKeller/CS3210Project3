@@ -11,11 +11,17 @@
 #include "pfs.h"
 #include "log.h"
 
+#include "config.h"
+#include <fuse_opt.h>
+#include <fuse_lowlevel.h>
+#include <fuse_common_compat.h>
+
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fuse.h>
+#include <fuse_common.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -44,6 +50,7 @@ static void pfs_fullpath(char fpath[PATH_MAX], const char *path)
 {	
 	log_msg("Entered pfs_fullpath\n");
     strcpy(fpath, PRI_DATA->rootdir);
+    //strcpy(fpath,"~/MyPFS");
     strncat(fpath, path, PATH_MAX);
     
     log_msg("    pfs_fullpath:  rootdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",
@@ -594,16 +601,69 @@ struct fuse_operations pfs_oper = {
   .fgetattr = pfs_fgetattr
 };
 
+
+struct fuse *setup_common(int argc, char *argv[],
+			       const struct fuse_operations *op,
+			       size_t op_size,
+			       char **mountpoint,
+			       int *multithreaded,
+			       int *fd,
+			       void *user_data,
+			       int compat)
+{
+	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+	struct fuse_chan *ch;
+	struct fuse *fuse;
+	int foreground;
+	int res;
+
+	res = fuse_parse_cmdline(&args, mountpoint, multithreaded, &foreground);
+	if (res == -1)
+		return NULL;
+
+	ch = fuse_mount(*mountpoint, &args);
+	if (!ch) {
+		fuse_opt_free_args(&args);
+		goto err_free;
+	}
+	fprintf(stderr, "Calling fuse_new\n");
+	fuse = fuse_new(ch, &args, op, op_size, user_data);
+	fuse_opt_free_args(&args);
+	if (fuse == NULL)
+		goto err_unmount;
+	fprintf(stderr, "calling fuse_daemonize\n");
+	res = fuse_daemonize(foreground);
+	if (res == -1)
+		goto err_unmount;
+	fprintf(stderr, "calling set_signal_handlers\n");
+	res = fuse_set_signal_handlers(fuse_get_session(fuse));
+	if (res == -1)
+		goto err_unmount;
+
+	if (fd)
+		*fd = fuse_chan_fd(ch);
+	fprintf(stderr, "returning fuse\n");
+	return fuse;
+
+err_unmount:
+	fuse_unmount(*mountpoint, ch);
+	if (fuse)
+		fuse_destroy(fuse);
+err_free:
+	free(*mountpoint);
+	return NULL;
+}
+
 int main(int argc, char *argv[])
 {
 	if(argc < 3){
 		fprintf(stderr, "usage: pfs [FUSE and mount options] backupDir mountPoint\n");
 		return 0;
 	}
-	int fuse_stat;
 	struct state* data = calloc(1,sizeof(struct state));
+//	struct state* data2 = calloc(1,sizeof(struct state));
 	
-	data->rootdir = realpath(argv[argc-1], NULL);
+	data->rootdir = realpath(argv[argc-2], NULL);
     argv[argc-2] = argv[argc-1];
     argv[argc-1] = NULL;
     argc--;
@@ -617,24 +677,61 @@ int main(int argc, char *argv[])
 		printf("Argv[%d]:%s\n",i,argv[i]);
 	}
 	//exit(0);
-	data->logfile = log_open();
+	data->logfile = log_open("pfs.log");
 	
 	fprintf(stderr,"About to call fuse_main\n");
+	
+	
+	struct fuse *fuse1;
+//	struct fuse* fuse2;
+	char *mountpoint1;
+//	char* mountpoint2;
+	int multithreaded1;
+//	int multithreaded2;
+	int res1;
+//	int res2;
+	
+/*	char* argv2[] = {"./pfs",realpath("~/MyPFS2",NULL)};
+	data2->rootdir = realpath("../backup/B/",NULL);
+	data2->logfile = log_open("pfs2.log");*/
+	
+	
+	fuse1 = setup_common(argc, argv, &pfs_oper, sizeof(pfs_oper), &mountpoint1,
+				 &multithreaded1, NULL, data, 0);
+	//fuse2 = setup_common(argc, argv2, &pfs_oper, sizeof(pfs_oper), &mountpoint2,
+	//			 &multithreaded2, NULL, data2, 0);
+	if (fuse1 == NULL)// || fuse2 == NULL)
+		return 1;
+
+	fprintf(stderr,"About to start fuse_loop1\n");
+	if (multithreaded1)
+		res1 = fuse_loop_mt(fuse1);
+	else
+		res1 = fuse_loop(fuse1);
+/*	fprintf(stderr,"About to start fuse_loop2\n");
+	if (multithreaded2)
+		res2 = fuse_loop_mt(fuse2);
+	else
+		res2 = fuse_loop(fuse2);*/
+
+	fuse_teardown(fuse1, mountpoint1);
+	//fuse_teardown(fuse2, mountpoint2);
+	if (res1 == -1)// || res2 == -1)
+		return 1;
+
+	return 0;
+	/*char* test1[] = {"./pfs","../test1/"};
+	char* test2[] = {"./pfs","../test2/"};
+	char* test3[] = {"./pfs","../test3/"};
 	fuse_stat = fuse_main(argc, argv, &pfs_oper, data);
-	return fuse_stat;
+	fprintf(stderr,"About to call fuse_main\n");
+	fuse_stat = fuse_main(argc, test1, &pfs_oper, data);
+	fprintf(stderr,"About to call fuse_main\n");
+	fuse_stat = fuse_main(argc, test2, &pfs_oper, data);*/
+	/*fprintf(stderr,"About to call fuse_main\n");
+	int fuse_stat = fuse_main(argc, argv, &pfs_oper, data);*/
+	//return fuse_stat;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

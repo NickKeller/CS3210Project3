@@ -13,13 +13,15 @@
 // maintain pfs state in here
 #include <limits.h>
 #include <stdio.h>
+#include <fuse.h>
 struct state {
     FILE *logfile;
     char *rootdir;
-    //char *backupdir;
+    int mountNum;
 };
 
 char* mapNameToDrives(const char* path);
+struct fuse *setup_common(int argc, char *argv[],const struct fuse_operations *op,size_t op_size,char **mountpoint,int *multithreaded,int *fd, void *user_data,int compat);
 #define PRI_DATA ((struct state *) fuse_get_context()->private_data)
 
 #endif
