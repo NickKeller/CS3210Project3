@@ -5,11 +5,11 @@
 #include <mysql/my_global.h>
 #include <mysql/my_config.h>
 
-int deleteImage(MYSQL *con, char path[]);
-int updatePath(MYSQL *con, char newPath[], char oldPath[]);
-int insertImage(MYSQL *con, char path[]);
+int deleteImage(char path[]);
+int updatePath( char newPath[], char oldPath[]);
+int insertImage(char path[]);
 
-int deleteImage(MYSQL *con, char path[]){
+int deleteImage(char path[]){
 
 	int success=1;
 	if(success==1){
