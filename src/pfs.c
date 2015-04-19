@@ -8,9 +8,8 @@
   gcc -Wall pfs.c `pkg-config fuse --cflags --libs` -o pfs
 */
 
-#define FUSE_USE_VERSION 26
-
 #include "pfs.h"
+#include "log.h"
 
 #include <ctype.h>
 #include <dirent.h>
@@ -25,32 +24,48 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+char* mapNameToDrives(const char* path){
+	log_msg("Entered mapNameToDrives, path is: %s\n",path);
+	return "ABCDE";
+}
+
+static int pfs_error(char* str){
+	int ret = -errno;
+	log_msg("	ERROR %s: %s\n",str,strerror(errno));
+	return ret;
+}
+
 //  All the paths I see are relative to the root of the mounted
 //  filesystem.  In order to get to the underlying filesystem, I need to
 //  have the mountpoint.  I'll save it away early on in main(), and then
 //  whenever I need a path for something I'll call this to construct
 //  it.
 static void pfs_fullpath(char fpath[PATH_MAX], const char *path)
-{
+{	
+	log_msg("Entered pfs_fullpath\n");
     strcpy(fpath, PRI_DATA->rootdir);
     strncat(fpath, path, PATH_MAX);
+    
+    log_msg("    pfs_fullpath:  rootdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",
+    PRI_DATA->rootdir, path, fpath);
 }
 
 
 static int pfs_getattr(const char *path, struct stat *stbuf)
 {
+	log_msg("Entered pfs_getattr\n");
 	int retstat = 0;
 	char fpath[PATH_MAX];
 	pfs_fullpath(fpath,path);
-	
 	retstat = lstat(fpath,stbuf);
 	if(retstat != 0){
-		retstat = -errno;
+		retstat = pfs_error("pfs_getattr lstat");
 	}
 	return retstat;
 }
 
 int pfs_readlink(const char* path, char* link, size_t size){
+	log_msg("Entered pfs_readlink\n");
 	int retstat = 0;
 	char fpath[PATH_MAX];
 	
@@ -59,13 +74,14 @@ int pfs_readlink(const char* path, char* link, size_t size){
 	
 	retstat = readlink(fpath, link, size - 1);
 	if(retstat < 0){
-		retstat = -errno;
+		retstat = pfs_error("pfs_readlink readlink");
 	}
 	
 	return retstat;
 }
 
 int pfs_mknod(const char* path, mode_t mode, dev_t dev){
+	log_msg("Entered pfs_mknod\n");
 	int retstat;
 	char fpath[PATH_MAX];
 	
@@ -74,25 +90,25 @@ int pfs_mknod(const char* path, mode_t mode, dev_t dev){
 	if(S_ISREG(mode)){
 		retstat = open(fpath, O_CREAT | O_EXCL | O_WRONLY, mode);
 		if(retstat < 0){
-			retstat = -errno;
+			retstat = pfs_error("pfs_mknod open");
 		}
 		else{
 			retstat = close(retstat);
 			if(retstat < 0){
-				retstat = -errno;
+				retstat = pfs_error("pfs_mknod close");
 			}
 		}
 	}
 	else if(S_ISFIFO(mode)){
 		retstat = mkfifo(fpath, mode);
 		if(retstat < 0){
-			retstat = -errno;
+			retstat = pfs_error("pfs_mknod mkfifo");
 		}
 	}
 	else{
 		retstat = mknod(fpath, mode, dev);
 		if(retstat < 0){
-			retstat = -errno;
+			retstat = pfs_error("pfs_mknod mknod");
 		}
 	}
 	
@@ -100,20 +116,38 @@ int pfs_mknod(const char* path, mode_t mode, dev_t dev){
 }
 
 int pfs_mkdir(const char* path, mode_t mode){
+	log_msg("Entered pfs_mkdir\n");
 	int retstat = 0;
 	char fpath[PATH_MAX];
 	
 	pfs_fullpath(fpath, path);
+	retstat = mkdir(fpath,mode);	
 	
-	retstat = mkdir(fpath,mode);
+	//backup
+	log_msg("Making dir: %s\n",path);
+/*	char* drives = mapNameToDrives(path);
+	for(int i = 0; i < strlen(drives); i++){
+		char* newpath = calloc(PATH_MAX,sizeof(char));
+		strcpy(newpath,PRI_DATA->backupdir);
+		log_msg("path is %s\n",newpath);
+		strncat(newpath,"/",1);
+		log_msg("path is %s\n",newpath);
+		strncat(newpath,&drives[i],1);
+		log_msg("path is %s\n",newpath);
+		strncat(newpath,path,strlen(path));
+		log_msg("path is %s\n",newpath);
+		mkdir(newpath,mode);
+	}*/
+	
 	if(retstat < 0){
-		retstat = -errno;
+		retstat = pfs_error("pfs_mkdir mkdir");
 	}
 	
 	return retstat;
 }
 
-int pfs_unlink(const char* path){
+static int pfs_unlink(const char* path){
+	log_msg("Entered pfs_unlink\n");
 	int retstat = 0;
 	char fpath[PATH_MAX];
 	
@@ -121,28 +155,30 @@ int pfs_unlink(const char* path){
 	
 	retstat = unlink(fpath);
 	if(retstat < 0){
-		retstat = -errno;
+		retstat = pfs_error("pfs_unlink unlink");
 	}
 	
 	return retstat;
 }
 
-int pfs_rmdir(const char* path){
-	  int retstat = 0;
-	  char fpath[PATH_MAX];
-	  
-	  pfs_fullpath(fpath, path);
-	  
-	  retstat = rmdir(fpath);
-	  if(retstat < 0){
-	  	retstat = -errno;
-	  }
-	  
-	  return retstat;
+static int pfs_rmdir(const char* path){
+	log_msg("Entered pfs_rmdir\n");
+	int retstat = 0;
+	char fpath[PATH_MAX];
+	
+	pfs_fullpath(fpath, path);
+	
+	retstat = rmdir(fpath);
+	if(retstat < 0){
+		retstat = pfs_error("pfs_rmdir rmdir");
+	}
+	
+	return retstat;
 }
 
-int pfs_symlink(const char *path, const char *link)
+static int pfs_symlink(const char *path, const char *link)
 {
+	log_msg("Entered pfs_symlink\n");
     int retstat = 0;
     char flink[PATH_MAX];
     
@@ -150,12 +186,13 @@ int pfs_symlink(const char *path, const char *link)
 	
     retstat = symlink(path, flink);
     if (retstat < 0){
-		retstat = -errno;
+		retstat = pfs_error("pfs_symlink symlink");
 	}
     return retstat;
 }
 
-int pfs_rename(const char* path, const char* newpath){
+static int pfs_rename(const char* path, const char* newpath){
+	log_msg("Entered pfs_rename\n");
 	int retstat = 0;
 	char fpath[PATH_MAX];
 	char fnewpath[PATH_MAX];
@@ -165,13 +202,14 @@ int pfs_rename(const char* path, const char* newpath){
 	
 	retstat = rename(fpath, fnewpath);
 	if(retstat < 0){
-		retstat = -errno;
+		retstat = pfs_error("pfs_rename rename");
 	}
 	
 	return retstat;
 }
 
-int pfs_link(const char* path, const char* newpath){
+static int pfs_link(const char* path, const char* newpath){
+	log_msg("Entered pfs_link\n");
 	int retstat = 0;
 	char fpath[PATH_MAX], fnewpath[PATH_MAX];
 	
@@ -180,27 +218,29 @@ int pfs_link(const char* path, const char* newpath){
 	
 	retstat = link(fpath, fnewpath);
 	if(retstat < 0){
-		retstat = -errno;
+		retstat = pfs_error("pfs_link link");
 	}
 	
 	return retstat;
 }
 
 /** Change the permission bits of a file */
-int pfs_chmod(const char *path, mode_t mode)
+static int pfs_chmod(const char *path, mode_t mode)
 {
+	log_msg("Entered pfs_chmod\n");
     int retstat;
     char fpath[PATH_MAX];
     
     pfs_fullpath(fpath,path);
     retstat = chmod(path, mode);
     if (retstat < 0)
-	retstat = -errno;
+	retstat = pfs_error("pfs_chmod chmod");
     
     return retstat;
 }
 
-int pfs_chown(const char* path, uid_t uid, gid_t gid){
+static int pfs_chown(const char* path, uid_t uid, gid_t gid){
+	log_msg("Entered pfs_chown\n");
 	int retstat = 0;
 	char fpath[PATH_MAX];
 	
@@ -208,38 +248,41 @@ int pfs_chown(const char* path, uid_t uid, gid_t gid){
 	
 	retstat = chown(fpath, uid, gid);
 	if(retstat < 0){
-		retstat = -errno;
+		retstat = pfs_error("pfs_chown chown");
 	}
 	
 	return retstat;
 }
 
-int pfs_truncate(const char* path, off_t newsize){
+static int pfs_truncate(const char* path, off_t newsize){
+	log_msg("Entered pfs_truncate\n");
 	int retstat = 0;
 	char fpath[PATH_MAX];
 	
 	pfs_fullpath(fpath, path);
 	
 	retstat = truncate(fpath, newsize);
-	if(retstat < 0) retstat = -errno;
+	if(retstat < 0) retstat = pfs_error("pfs_truncate truncate");
 	
 	return retstat;
 }
 
-int pfs_utime(const char* path, struct utimbuf *ubuf){
+static int pfs_utime(const char* path, struct utimbuf *ubuf){
+	log_msg("Entered pfs_utime\n");
 	int retstat;
 	char fpath[PATH_MAX];
 	
 	pfs_fullpath(fpath,path);
 	
 	retstat = utime(fpath,ubuf);
-	if(retstat < 0) retstat = -errno;
+	if(retstat < 0) retstat = pfs_error("pfs_utime utime");
 	
 	return retstat;
 }
 
 static int pfs_open(const char *path, struct fuse_file_info *fi)
 {
+	log_msg("Entered pfs_open\n");
 	int retstat = 0;
 	int fd;
 	char fpath[PATH_MAX];
@@ -248,7 +291,7 @@ static int pfs_open(const char *path, struct fuse_file_info *fi)
 	
 	fd = open(fpath, fi->flags);
 	if(fd < 0){
-		retstat = -errno;
+		retstat = pfs_error("pfs_open open");
 	}
 	
 	fi->fh = fd;
@@ -259,48 +302,54 @@ static int pfs_open(const char *path, struct fuse_file_info *fi)
 static int pfs_read(const char *path, char *buf, size_t size, off_t offset,
 		      struct fuse_file_info *fi)
 {
+	log_msg("Entered pfs_read\n");
 	int retstat = pread(fi->fh, buf, size, offset);
-	if(retstat < 0) retstat = -errno;
+	if(retstat < 0) retstat = pfs_error("pfs_read read");
 	
 	return retstat;
 }
 
-int pfs_write(const char* path, const char* buf, size_t size, off_t offset, 
+static int pfs_write(const char* path, const char* buf, size_t size, off_t offset, 
 				struct fuse_file_info* fi)
 {
+	log_msg("Entered pfs_write\n");
 	 int retstat = 0;
 	 
 	 retstat = pwrite(fi->fh, buf, size, offset);
-	 if(retstat < 0) retstat = -errno;
+	 if(retstat < 0) retstat = pfs_error("pfs_write pwrite");
 	 
 	 return retstat;				
 }
 
-int pfs_statfs(const char* path, struct statvfs* statv){
+static int pfs_statfs(const char* path, struct statvfs* statv){
+	log_msg("Entered pfs_statfs\n");
 	int retstat = 0;
 	char fpath[PATH_MAX];
 	
 	pfs_fullpath(fpath, path);
 	
 	retstat = statvfs(fpath, statv);
-	if(retstat < 0) retstat = -errno;
+	if(retstat < 0) retstat = pfs_error("pfs_statfs statvfs");
 	
 	return retstat;
 }
 
-int pfs_flush(const char* path, struct fuse_file_info* fi){
+static int pfs_flush(const char* path, struct fuse_file_info* fi){
+	log_msg("Entered pfs_flush\n");
 	int retstat = 0;
 	
 	return retstat;
 }
 
-int pfs_release(const char* path, struct fuse_file_info* fi){
+static int pfs_release(const char* path, struct fuse_file_info* fi){
+	log_msg("Entered pfs_release\n");
 	int retstat = 0;
 	retstat = close(fi->fh);
 	return retstat;
 }
 
-int pfs_fsync(const char* path, int datasync, struct fuse_file_info* fi){
+static int pfs_fsync(const char* path, int datasync, struct fuse_file_info* fi){
+	log_msg("Entered pfs_fsync\n");
 	int retstat = 0;
 #ifdef HAVE_FDATASYNC
 	if(datasync){
@@ -310,15 +359,16 @@ int pfs_fsync(const char* path, int datasync, struct fuse_file_info* fi){
 #endif
 	retstat = fsync(fi->fh);
 	
-	if(retstat < 0) retstat = -errno;
+	if(retstat < 0) retstat = pfs_error("pfs_fsync fsync");
 	
 	return retstat;	
 }
 
 #ifdef HAVE_SYS_XATTR_H
 /** Set extended attributes */
-int pfs_setxattr(const char *path, const char *name, const char *value, size_t size, int flags)
+static int pfs_setxattr(const char *path, const char *name, const char *value, size_t size, int flags)
 {
+	log_msg("Entered pfs_setxattr\n");
     int retstat = 0;
     char fpath[PATH_MAX];
     
@@ -326,14 +376,15 @@ int pfs_setxattr(const char *path, const char *name, const char *value, size_t s
     
     retstat = lsetxattr(fpath, name, value, size, flags);
     if (retstat < 0)
-	retstat = -errno;
+	retstat = pfs_error("pfs_setxattr lsetxattr");
     
     return retstat;
 }
 
 /** Get extended attributes */
-int pfs_getxattr(const char *path, const char *name, char *value, size_t size)
+static int pfs_getxattr(const char *path, const char *name, char *value, size_t size)
 {
+	log_msg("Entered pfs_getxattr\n");
     int retstat = 0;
     char fpath[PATH_MAX];
     
@@ -341,14 +392,15 @@ int pfs_getxattr(const char *path, const char *name, char *value, size_t size)
     
     retstat = lgetxattr(fpath, name, value, size);
     if (retstat < 0)
-	retstat = -errno;
+	retstat = pfs_error("pfs_getxattr lgetxattr");
     
     return retstat;
 }
 
 /** List extended attributes */
-int pfs_listxattr(const char *path, char *list, size_t size)
+static int pfs_listxattr(const char *path, char *list, size_t size)
 {
+	log_msg("Entered pfs_listxattr\n");
     int retstat = 0;
     char fpath[PATH_MAX];
     char *ptr;
@@ -358,14 +410,15 @@ int pfs_listxattr(const char *path, char *list, size_t size)
     
     retstat = llistxattr(fpath, list, size);
     if (retstat < 0)
-	retstat = -errno;
+	retstat = pfs_error("pfs_listxattr llistxattr");
     
     return retstat;
 }
 
 /** Remove extended attributes */
-int pfs_removexattr(const char *path, const char *name)
+static int pfs_removexattr(const char *path, const char *name)
 {
+	log_msg("Entered pfs_removexattr\n");
     int retstat = 0;
     char fpath[PATH_MAX];
     
@@ -373,13 +426,14 @@ int pfs_removexattr(const char *path, const char *name)
     
     retstat = lremovexattr(fpath, name);
     if (retstat < 0)
-	retstat = -errno;
+	retstat = pfs_error("pfs_removexattr lremovexattr");
     
     return retstat;
 }
 #endif
 
-int pfs_opendir(const char* path, struct fuse_file_info* fi){
+static int pfs_opendir(const char* path, struct fuse_file_info* fi){
+	log_msg("Entered pfs_opendir\n");
 	DIR *dp;
 	int retstat = 0;
 	char fpath[PATH_MAX];
@@ -388,16 +442,17 @@ int pfs_opendir(const char* path, struct fuse_file_info* fi){
 	
 	dp = opendir(fpath);
 	if(dp == NULL){
-		retstat = -errno;
+		retstat = pfs_error("pfs_opendir opendir");
 	}
 	
 	fi->fh = (intptr_t) dp;
 	return retstat;
 }
 
-int pfs_readdir(const char* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
+static int pfs_readdir(const char* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 					struct fuse_file_info* fi)
 {
+	log_msg("Entered pfs_readdir\n");
 	int retstat = 0;
 	DIR* dp;
 	struct dirent* de;
@@ -406,7 +461,7 @@ int pfs_readdir(const char* path, void* buf, fuse_fill_dir_t filler, off_t offse
 	
 	de = readdir(dp);
 	if(de == 0){
-		retstat = -errno;
+		retstat = pfs_error("pfs_readdir readdir");
 		return retstat;
 	}
 	
@@ -419,24 +474,30 @@ int pfs_readdir(const char* path, void* buf, fuse_fill_dir_t filler, off_t offse
 	return retstat;
 }
 
-int pfs_releasedir(const char* path, struct fuse_file_info* fi){
+static int pfs_releasedir(const char* path, struct fuse_file_info* fi){
+	log_msg("Entered pfs_releasedir\n");
 	int retstat = 0;
 	
 	closedir((DIR*)(uintptr_t)fi->fh);
 	return retstat;
 }
 
-int pfs_fsyncdir(const char* path, int datasync, struct fuse_file_info* fi){
+static int pfs_fsyncdir(const char* path, int datasync, struct fuse_file_info* fi){
+	log_msg("Entered pfs_fsyncdir\n");
 	return 0;
 }
 
 void* pfs_init(struct fuse_conn_info *conn){
+	log_msg("Entered pfs_init\n");
 	return PRI_DATA;
 }
 
-void pfs_destroy(void* userdata){}
+void pfs_destroy(void* userdata){
+	log_msg("Entered pfs_destroy\n");
+}
 
-int pfs_access(const char* path, int mask){
+static int pfs_access(const char* path, int mask){
+	log_msg("Entered pfs_access\n");
 	int retstat = 0;
 	char fpath[PATH_MAX];
 	
@@ -444,12 +505,13 @@ int pfs_access(const char* path, int mask){
 	
 	retstat = access(fpath,mask);
 	
-	if(retstat < 0) retstat = -errno;
+	if(retstat < 0) retstat = pfs_error("pfs_access access");
 	
 	return retstat;
 }
 
-int pfs_create(const char* path, mode_t mode, struct fuse_file_info* fi){
+static int pfs_create(const char* path, mode_t mode, struct fuse_file_info* fi){
+	log_msg("Entered pfs_create\n");
 	int retstat = 0;
 	char fpath[PATH_MAX];
 	int fd;
@@ -457,21 +519,23 @@ int pfs_create(const char* path, mode_t mode, struct fuse_file_info* fi){
 	pfs_fullpath(fpath,path);
 	
 	fd = creat(fpath, mode);
-	if(fd < 0) retstat = -errno;
+	if(fd < 0) retstat = pfs_error("pfs_create creat");
 	
 	fi->fh = fd;
 	
 	return retstat;
 }
 
-int pfs_ftruncate(const char* path, off_t offset, struct fuse_file_info* fi){
+static int pfs_ftruncate(const char* path, off_t offset, struct fuse_file_info* fi){
+	log_msg("Entered pfs_ftruncate\n");
 	int retstat = 0;
 	retstat = ftruncate(fi->fh, offset);
-	if(retstat < 0) retstat = -errno;
+	if(retstat < 0) retstat = pfs_error("pfs_ftruncate ftruncate");
 	return retstat;
 }
 
-int pfs_fgetattr(const char* path, struct stat* statbuf, struct fuse_file_info* fi){
+static int pfs_fgetattr(const char* path, struct stat* statbuf, struct fuse_file_info* fi){
+	log_msg("Entered pfs_fgetattr\n");
 	int retstat = 0;
 	
 	if(!strcmp(path,"/")){
@@ -479,7 +543,7 @@ int pfs_fgetattr(const char* path, struct stat* statbuf, struct fuse_file_info* 
 	}
 	
 	retstat = fstat(fi->fh, statbuf);
-	if(retstat < 0) retstat = -errno;
+	if(retstat < 0) retstat = pfs_error("pfs_fgetattr fstat");
 	
 	return retstat;
 }
@@ -533,18 +597,29 @@ struct fuse_operations pfs_oper = {
 int main(int argc, char *argv[])
 {
 	if(argc < 3){
-		fprintf(stderr, "usage: [FUSE and mount options] rootDir mountPoint\n");
+		fprintf(stderr, "usage: pfs [FUSE and mount options] backupDir mountPoint\n");
 		return 0;
 	}
 	int fuse_stat;
 	struct state* data = calloc(1,sizeof(struct state));
 	
-	data->rootdir = realpath(argv[argc-2],NULL);
-	argv[argc-2] = argv[argc-1];
-	argv[argc-1] = NULL;
-	argc--;
+	data->rootdir = realpath(argv[argc-1], NULL);
+    argv[argc-2] = argv[argc-1];
+    argv[argc-1] = NULL;
+    argc--;
 	
-	printf("PATH_MAX is:%d\n",PATH_MAX);
+	printf("MountDir is: %s\n",argv[argc-1]);
+	
+	
+	printf("Rootdir is: %s\n",data->rootdir);//,data->backupdir);
+	printf("Argc:%d\n",argc);
+	for(int i = 0; i < argc; i++){
+		printf("Argv[%d]:%s\n",i,argv[i]);
+	}
+	//exit(0);
+	data->logfile = log_open();
+	
+	fprintf(stderr,"About to call fuse_main\n");
 	fuse_stat = fuse_main(argc, argv, &pfs_oper, data);
 	return fuse_stat;
 }

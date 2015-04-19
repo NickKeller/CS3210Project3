@@ -10,13 +10,16 @@
 // setlinebuf() later in consequence.
 #define _XOPEN_SOURCE 500
 
-// maintain bbfs state in here
+// maintain pfs state in here
 #include <limits.h>
 #include <stdio.h>
 struct state {
     FILE *logfile;
     char *rootdir;
+    //char *backupdir;
 };
+
+char* mapNameToDrives(const char* path);
 #define PRI_DATA ((struct state *) fuse_get_context()->private_data)
 
 #endif
