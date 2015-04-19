@@ -1,5 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <string.h>
+#include <stdint.h>
+
+#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8) +(uint32_t)(((const uint8_t *)(d))[0]))
+
 
 unsigned long hashFunction(char *str);
 void addNode(char *mount);
@@ -17,7 +23,6 @@ struct node
 struct node *head;
 int size = 0;
 
-
 void addNode(char *mount)
 {
     unsigned long hash = hashFunction(mount);
@@ -28,7 +33,7 @@ void addNode(char *mount)
         head->mount = mount;
         head->next = head;
     }
-    else if (strncmp(head->mount, mount) == 0)
+    else if (strcmp(head->mount, mount) == 0)
     {
         return;
     }
@@ -51,7 +56,7 @@ void addNode(char *mount)
 
             while (curr->next != head) // tail
             {
-                if (strncmp(curr->next->mount, mount) == 0)   // mount exists
+                if (strcmp(curr->next->mount, mount) == 0)   // mount exists
                     return;
                 if (hash < curr->next->hash)
                     break;
@@ -75,7 +80,7 @@ void removeNode(char *mount)
     {
         head = NULL;
     }
-    else if (strncmp(head->mount, mount) == 0)
+    else if (strcmp(head->mount, mount) == 0)
     {
         struct node *headNext = head->next;
         head->hash = headNext->hash;
@@ -87,7 +92,7 @@ void removeNode(char *mount)
         struct node *curr = head;
         while (curr->next != head)
         {
-            if (strncmp(curr->next->mount, mount) == 0)
+            if (strcmp(curr->next->mount, mount) == 0)
                 break;
             curr = curr->next;
         }
@@ -123,10 +128,48 @@ struct node *search(char *key)
 unsigned long hashFunction(char *str)
 {
     unsigned long hash = 0;
-    int c;
+    int c = 0;
 
-    while (c = *str++)
+    while (c == *str++)
         hash = c + (hash << 6) + (hash << 16) - hash;
+
+    unsigned long tmp, len;
+    int rem = 0;
+    len = 4;
+
+
+    /* Main loop */
+    for (;len > 0; len--) {
+        hash  += get16bits (str);
+        tmp    = (get16bits (str+2) << 11) ^ hash;
+        hash   = (hash << 16) ^ tmp;
+        str  += 2*sizeof (uint16_t);
+        hash  += hash >> 11;
+    }
+
+    /* Handle end cases */
+    switch (rem) {
+        case 3: hash += get16bits (str);
+                hash ^= hash << 16;
+                hash ^= ((signed char)str[sizeof (uint16_t)]) << 18;
+                hash += hash >> 11;
+                break;
+        case 2: hash += get16bits (str);
+                hash ^= hash << 11;
+                hash += hash >> 17;
+                break;
+        case 1: hash += (signed char)*str;
+                hash ^= hash << 10;
+                hash += hash >> 1;
+    }
+
+    /* Force "avalanching" of final 127 bits */
+    hash ^= hash << 3;
+    hash += hash >> 5;
+    hash ^= hash << 4;
+    hash += hash >> 17;
+    hash ^= hash << 25;
+    hash += hash >> 6;
 
     return hash;
 }
@@ -144,3 +187,7 @@ void printList()
     }
 
 }
+
+
+
+
