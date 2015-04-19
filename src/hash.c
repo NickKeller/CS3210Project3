@@ -3,15 +3,18 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdint.h>
+//#include "pfs.h"
 
 #define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8) +(uint32_t)(((const uint8_t *)(d))[0]))
 
-
+//hash function stuff
 unsigned long hashFunction(char *str);
 void addNode(char *mount);
 void removeNode(char *mount);
 struct node *search(char *key);
 void printList();
+int getSize();
+
 
 struct node
 {
@@ -23,8 +26,13 @@ struct node
 struct node *head;
 int size = 0;
 
+int getSize(){
+	return size;
+}
+
 void addNode(char *mount)
-{
+{	
+	printf("Entered addNode\n");
     unsigned long hash = hashFunction(mount);
     if (size == 0)
     {

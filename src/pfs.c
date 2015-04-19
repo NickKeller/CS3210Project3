@@ -33,7 +33,12 @@
 
 int mapNameToDrives(const char* path){
 	log_msg("Entered mapNameToDrives, path is: %s\n",path);
-	return 0;
+	char* key = calloc(strlen(path),sizeof(char));
+	strcpy(key,path);
+	struct node* drive = search(key);
+	int driveNum = atoi(&drive->mount[strlen(drive->mount)-1]);
+	log_msg("Drive Num:%d\n",driveNum);
+	return driveNum;
 }
 
 static int pfs_error(char* str){
@@ -177,6 +182,10 @@ static int pfs_unlink(const char* path){
 	retstat = unlink(fpath);
 	//backup
 	if(PRI_DATA->master == 1){
+		int databaseRes = deleteImage(fpath);
+		if(databaseRes == 0){
+			log_msg("ERROR IN PUSHING TO DATABASE - deleteImage\n");
+		}
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
 		while(drivesWrittenTo < 2){
@@ -282,6 +291,11 @@ static int pfs_rename(const char* path, const char* newpath){
 	retstat = rename(fpath, fnewpath);
 	//backup
 	if(PRI_DATA->master == 1){
+		//update database
+		int databaseRes = updatePath(fnewpath,fpath);
+		if (databaseRes == 0){
+			log_msg("ERROR IN PUSHING TO DATABASE - updatePath\n");
+		}
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
 		while(drivesWrittenTo < 2){
@@ -808,6 +822,21 @@ static int pfs_fsyncdir(const char* path, int datasync, struct fuse_file_info* f
 
 void* pfs_init(struct fuse_conn_info *conn){
 	log_msg("Entered pfs_init\n");
+	if(PRI_DATA->master == 1){
+		for(int i = 0; i < PRI_DATA->numMounts; i++){
+			char* total = calloc(strlen(PRI_DATA->backup) + 2,sizeof(char));
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",i);
+			strcpy(total,PRI_DATA->backup);
+			strncat(total,"/",1);
+			strncat(total,drive,1);
+			log_msg("\tFilepath is:%s\n",total);
+			addNode(total);
+			struct node* test = search("Key");
+			int driveNum = atoi(&total[strlen(total)-1]);
+			log_msg("\tMount from node is:%s\nSize is:%d\ndriveNum is:%d\n",test->mount,getSize(),driveNum);
+		}
+	}
 	return PRI_DATA;
 }
 
@@ -840,6 +869,10 @@ static int pfs_create(const char* path, mode_t mode, struct fuse_file_info* fi){
 	fd = creat(fpath, mode);
 	//backup
 	if(PRI_DATA->master == 1){
+		int databaseRes = insertImage(fpath);
+		if(databaseRes == 0){
+			log_msg("ERROR IN PUSHING TO DATABASE - insertImage\n");
+		}
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
 		while(drivesWrittenTo < 2){
@@ -998,17 +1031,14 @@ int main(int argc, char *argv[])
 	data->backup = realpath(argv[argc-3],NULL);
 	data->logfile = log_open(argv[argc-4]);
 	
-	
-	printf("MountDir is: %s\n",args[1]);
-	printf("Rootdir is: %s\n",data->rootdir);
-	printf("Backup is: %s\n",data->backup);
-	
+	fprintf(stderr,"MountDir is: %s\n",args[1]);
+	fprintf(stderr,"Rootdir is: %s\n",data->rootdir);
+	fprintf(stderr,"Backup is: %s\n",data->backup);
 	printf("Argc:%d\n",argc);
 	for(int i = 0; i < 2; i++){
 		printf("Args[%d]:%s\n",i,args[i]);
 	}
 	//exit(0);
-	
 	fprintf(stderr,"About to call fuse_main\n");
 	return fuse_main(2,args,&pfs_oper,data);
 	
