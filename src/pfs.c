@@ -27,18 +27,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <sys/types.h>
 
-static char* backups[];
-static char* backup1;
-static char* backup2;
-static char* backup3;
-static char* backup4;
-
-char* mapNameToDrives(const char* path){
+int mapNameToDrives(const char* path){
 	log_msg("Entered mapNameToDrives, path is: %s\n",path);
-	return "ABCDE";
+	return 0;
 }
 
 static int pfs_error(char* str){
@@ -137,15 +132,34 @@ int pfs_mkdir(const char* path, mode_t mode){
 	retstat = mkdir(fpath,mode);	
 	
 	//backup
-	log_msg("Trying to write to backups\n");
-	char fpath2[PATH_MAX];
-	strcpy(fpath2,backup1);
-	strncat(fpath2,path,strlen(path));
-	int res2 = mkdir(fpath2,mode);
-	if(res2 < 0){
-		pfs_error("pfs_mkdir on Backup/F");
-	}
-	log_msg("fpath2:%s\n",fpath2);	
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int res2 = mkdir(fpath2,mode);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_mkdir on backup/%s",drive);
+				pfs_error("pfs_mkdir");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}	
 	if(retstat < 0){
 		retstat = pfs_error("pfs_mkdir mkdir");
 	}
@@ -161,6 +175,35 @@ static int pfs_unlink(const char* path){
 	pfs_fullpath(fpath,path);
 	
 	retstat = unlink(fpath);
+	//backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int res2 = unlink(fpath2);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_unlink on backup/%s",drive);
+				pfs_error("pfs_unlink");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}
 	if(retstat < 0){
 		retstat = pfs_error("pfs_unlink unlink");
 	}
@@ -176,6 +219,35 @@ static int pfs_rmdir(const char* path){
 	pfs_fullpath(fpath, path);
 	
 	retstat = rmdir(fpath);
+	//backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int res2 = rmdir(fpath2);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_rmdir on backup/%s",drive);
+				pfs_error("pfs_rmdir");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}
 	if(retstat < 0){
 		retstat = pfs_error("pfs_rmdir rmdir");
 	}
@@ -208,6 +280,43 @@ static int pfs_rename(const char* path, const char* newpath){
 	pfs_fullpath(fnewpath, newpath);
 	
 	retstat = rename(fpath, fnewpath);
+	//backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char fnewpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			//old path
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			//new path
+			strcpy(fnewpath2,PRI_DATA->backup);
+			strncat(fnewpath2,"/",1);
+			strncat(fnewpath2,drive,strlen(drive));
+			strncat(fnewpath2,newpath,strlen(newpath));
+						
+			log_msg("Writing %s\n to %s\n",fnewpath2,fpath2);
+			int res2 = rename(fpath2,fnewpath2);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_rename on backup/%s\n",drive);
+				pfs_error("pfs_rename");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\nfnewpath2:%s\n",fpath2,fnewpath2);
+		}
+		
+	}
 	if(retstat < 0){
 		retstat = pfs_error("pfs_rename rename");
 	}
@@ -240,6 +349,35 @@ static int pfs_chmod(const char *path, mode_t mode)
     
     pfs_fullpath(fpath,path);
     retstat = chmod(path, mode);
+ 	//backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int res2 = chmod(fpath2,mode);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_chmod on backup/%s\n",drive);
+				pfs_error("pfs_chmod");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}   
     if (retstat < 0)
 	retstat = pfs_error("pfs_chmod chmod");
     
@@ -254,6 +392,35 @@ static int pfs_chown(const char* path, uid_t uid, gid_t gid){
 	pfs_fullpath(fpath,path);
 	
 	retstat = chown(fpath, uid, gid);
+	//backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int res2 = chown(fpath2, uid, gid);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_chown on backup/%s\n",drive);
+				pfs_error("pfs_chown");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}
 	if(retstat < 0){
 		retstat = pfs_error("pfs_chown chown");
 	}
@@ -269,6 +436,33 @@ static int pfs_truncate(const char* path, off_t newsize){
 	pfs_fullpath(fpath, path);
 	
 	retstat = truncate(fpath, newsize);
+	//backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int res2 = truncate(fpath2, newsize);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_truncate on backup/%s\n",drive);
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+			}
+			drivesWrittenTo++;
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}
 	if(retstat < 0) retstat = pfs_error("pfs_truncate truncate");
 	
 	return retstat;
@@ -282,6 +476,35 @@ static int pfs_utime(const char* path, struct utimbuf *ubuf){
 	pfs_fullpath(fpath,path);
 	
 	retstat = utime(fpath,ubuf);
+	//backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int res2 = utime(fpath2,ubuf);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_utime on backup/%s\n",drive);
+				pfs_error("pfs_utime");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}
 	if(retstat < 0) retstat = pfs_error("pfs_utime utime");
 	
 	return retstat;
@@ -323,6 +546,37 @@ static int pfs_write(const char* path, const char* buf, size_t size, off_t offse
 	 int retstat = 0;
 	 
 	 retstat = pwrite(fi->fh, buf, size, offset);
+	 //backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int fd = open(fpath2, fi->flags);
+			int res2 = pwrite(fd,buf,size,offset);
+			close(fd);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_setxattr on backup/%s\n",drive);
+				pfs_error("pfs_setxattr");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}
 	 if(retstat < 0) retstat = pfs_error("pfs_write pwrite");
 	 
 	 return retstat;				
@@ -382,6 +636,35 @@ static int pfs_setxattr(const char *path, const char *name, const char *value, s
     pfs_fullpath(fpath, path);
     
     retstat = lsetxattr(fpath, name, value, size, flags);
+    //backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int res2 = lsetxattr(fpath2, name, value, size, flags);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_setxattr on backup/%s\n",drive);
+				pfs_error("pfs_setxattr");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}
     if (retstat < 0)
 	retstat = pfs_error("pfs_setxattr lsetxattr");
     
@@ -432,6 +715,35 @@ static int pfs_removexattr(const char *path, const char *name)
     pfs_fullpath(fpath, path);
     
     retstat = lremovexattr(fpath, name);
+    //backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int res2 = lremovexattr(fpath2, name);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_removexattr on backup/%s\n",drive);
+				pfs_error("pfs_removexattr");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}
     if (retstat < 0)
 	retstat = pfs_error("pfs_removexattr lremovexattr");
     
@@ -526,6 +838,35 @@ static int pfs_create(const char* path, mode_t mode, struct fuse_file_info* fi){
 	pfs_fullpath(fpath,path);
 	
 	fd = creat(fpath, mode);
+	//backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int res2 = creat(fpath2, mode);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_create on backup/%s\n",drive);
+				pfs_error("pfs_create");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}
 	if(fd < 0) retstat = pfs_error("pfs_create creat");
 	
 	fi->fh = fd;
@@ -537,6 +878,35 @@ static int pfs_ftruncate(const char* path, off_t offset, struct fuse_file_info* 
 	log_msg("Entered pfs_ftruncate\n");
 	int retstat = 0;
 	retstat = ftruncate(fi->fh, offset);
+	//backup
+	if(PRI_DATA->master == 1){
+		int startDrive = mapNameToDrives(path);
+		int drivesWrittenTo = 0;
+		while(drivesWrittenTo < 2){
+			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
+			char fpath2[PATH_MAX];
+			char* drive = calloc(1,sizeof(char));
+			sprintf(drive,"%d",startDrive);
+			strcpy(fpath2,PRI_DATA->backup);
+			strncat(fpath2,"/",1);
+			strncat(fpath2,drive,strlen(drive));
+			strncat(fpath2,path,strlen(path));
+			log_msg("Writing to %s\n",fpath2);
+			int res2 = truncate(fpath2,offset);
+			if(res2 < 0){
+				log_msg("ERROR: pfs_create on backup/%s\n",drive);
+				pfs_error("pfs_create");
+			}
+			else{
+				log_msg("Successful write to:%s\n",fpath2);
+				drivesWrittenTo++;
+			}
+			
+			startDrive = (startDrive+1) % PRI_DATA->numMounts;
+			log_msg("fpath2:%s\n",fpath2);
+		}
+		
+	}
 	if(retstat < 0) retstat = pfs_error("pfs_ftruncate ftruncate");
 	return retstat;
 }
@@ -603,39 +973,43 @@ struct fuse_operations pfs_oper = {
 
 int main(int argc, char *argv[])
 {
-	if(argc < 3){
-		fprintf(stderr, "usage: pfs [FUSE and mount options] backupDir mountPoint\n");
+	if(argc < 5 || argc == 6 || argc > 7){
+		fprintf(stderr, "usage: pfs [-m numMounts] logfileName backupMaster backupDir mountPoint\n");
 		return 0;
 	}
+	
 	struct state* data = calloc(1,sizeof(struct state));
 	
+	if(argc == 7){
+		data->master = 1;
+		data->numMounts = atoi(argv[2]);
+		printf("NumMounts:%d\n",data->numMounts);
+	}
+	else{
+		data->master = 0;
+		data->numMounts = 0;
+	}
+	
+	char* args[2];
+	args[0] = "./pfs";
+	args[1] = argv[argc-1];
+	
 	data->rootdir = realpath(argv[argc-2], NULL);
-    argv[argc-2] = argv[argc-1];
-    argv[argc-1] = NULL;
-    argc--;
-    
-    backup1 = realpath("../backup/B/",NULL);
-    backup2 = realpath("../backup/C/",NULL);
-    backup3 = realpath("../backup/D/",NULL);
-    backup4 = realpath("../backup/E/",NULL);
-    
-    printf("Backup1 is:%s\n",backup1);
-    printf("Backup2 is:%s\n",backup2);
-    printf("Backup3 is:%s\n",backup3);
-    printf("Backup4 is:%s\n",backup4);
-	
-	printf("MountDir is: %s\n",argv[argc-1]);
+	data->backup = realpath(argv[argc-3],NULL);
+	data->logfile = log_open(argv[argc-4]);
 	
 	
-	printf("Rootdir is: %s\n",data->rootdir);//,data->backupdir);
+	printf("MountDir is: %s\n",args[1]);
+	printf("Rootdir is: %s\n",data->rootdir);
+	printf("Backup is: %s\n",data->backup);
+	
 	printf("Argc:%d\n",argc);
-	for(int i = 0; i < argc; i++){
-		printf("Argv[%d]:%s\n",i,argv[i]);
+	for(int i = 0; i < 2; i++){
+		printf("Args[%d]:%s\n",i,args[i]);
 	}
 	//exit(0);
-	data->logfile = log_open("pfs.log");
 	
 	fprintf(stderr,"About to call fuse_main\n");
-	return fuse_main(argc,argv,&pfs_oper,data);
+	return fuse_main(2,args,&pfs_oper,data);
 	
 }
