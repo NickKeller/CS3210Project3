@@ -7,7 +7,7 @@
 
 int deleteImage(char path[]);
 int updatePath( char newPath[], char oldPath[]);
-int insertImage(char path[]);
+int insertImage(char *path);
 
 int deleteImage(char path[]){
 
@@ -80,23 +80,38 @@ int updatePath(char newPath[], char oldPath[]){
   return success;
 }
 
-int insertImage(char path[]){
+int insertImage(char *path){
   int success=1;
   if(success){
-	  MYSQL *con = mysql_init(NULL);
-	  
-	  if (con == NULL) 
-	  {
-	    success=0;
-	  }  
+  MYSQL *con = mysql_init(NULL);
+  
+  if (con == NULL) 
+  {
+    success=0;
+  }  
 
-	  if (mysql_real_connect(con, "pujaridb.csciwcfdboyu.us-east-1.rds.amazonaws.com", "cs3210", "12345678", 
-	          "rpfs", 0, NULL, 0) == NULL) 
-	  {
-	    success=0;
-	  }
+  if (mysql_real_connect(con, "pujaridb.csciwcfdboyu.us-east-1.rds.amazonaws.com", "cs3210", "12345678", 
+          "rpfs", 0, NULL, 0) == NULL) 
+	{
+	  success=0;
+	}
 
-	  FILE *fp = fopen(path, "rb");
+	int lenStr = strlen(path)*2;
+	char buffer[lenStr];
+	int j= 0;
+
+	for( size_t i = 0; i < strlen(path); i++ )
+	{ 
+	    buffer[j] = path[i];
+	    if(path[i]=='/'){
+	      j++;
+	      buffer[j]='/';
+	    }
+	    j++;
+	}
+	buffer[j]='\0';
+
+	  FILE *fp = fopen(buffer, "rb");
 	  
 	  if (fp == NULL) 
 	  {
