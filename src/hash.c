@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "hash.h"
+#include <sys/types.h>
+#include <string.h>
+#include <stdint.h>
 
 #define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8) +(uint32_t)(((const uint8_t *)(d))[0]))
 
@@ -31,7 +33,7 @@ void addNode(char *mount)
         head->mount = mount;
         head->next = head;
     }
-    else if (strncmp(head->mount, mount) == 0)
+    else if (strcmp(head->mount, mount) == 0)
     {
         return;
     }
@@ -54,7 +56,7 @@ void addNode(char *mount)
 
             while (curr->next != head) // tail
             {
-                if (strncmp(curr->next->mount, mount) == 0)   // mount exists
+                if (strcmp(curr->next->mount, mount) == 0)   // mount exists
                     return;
                 if (hash < curr->next->hash)
                     break;
@@ -78,7 +80,7 @@ void removeNode(char *mount)
     {
         head = NULL;
     }
-    else if (strncmp(head->mount, mount) == 0)
+    else if (strcmp(head->mount, mount) == 0)
     {
         struct node *headNext = head->next;
         head->hash = headNext->hash;
@@ -90,7 +92,7 @@ void removeNode(char *mount)
         struct node *curr = head;
         while (curr->next != head)
         {
-            if (strncmp(curr->next->mount, mount) == 0)
+            if (strcmp(curr->next->mount, mount) == 0)
                 break;
             curr = curr->next;
         }
@@ -126,13 +128,13 @@ struct node *search(char *key)
 unsigned long hashFunction(char *str)
 {
     unsigned long hash = 0;
-    int c;
+    int c = 0;
 
-    while (c = *str++)
+    while (c == *str++)
         hash = c + (hash << 6) + (hash << 16) - hash;
 
     unsigned long tmp, len;
-    int rem;
+    int rem = 0;
     len = 4;
 
 
