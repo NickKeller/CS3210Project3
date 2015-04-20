@@ -81,21 +81,24 @@ int updatePath(char newPath[], char oldPath[]){
 }
 
 int insertImage(char *path){
+
   int success=1;
   if(success){
+  	fprintf(stderr,"mysql_init\n");
   MYSQL *con = mysql_init(NULL);
+  fprintf(stderr,"mysql_init done\n");
   
   if (con == NULL) 
   {
     success=0;
   }  
-
+fprintf(stderr,"mysql_connect begin\n");
   if (mysql_real_connect(con, "pujaridb.csciwcfdboyu.us-east-1.rds.amazonaws.com", "cs3210", "12345678", 
           "rpfs", 0, NULL, 0) == NULL) 
 	{
 	  success=0;
 	}
-
+fprintf(stderr,"mysql_connect done\n");
 	int lenStr = strlen(path)*2;
 	char buffer[lenStr];
 	int j= 0;
@@ -152,8 +155,10 @@ int insertImage(char *path){
 	  char chunk[2*size+1];
 	  mysql_real_escape_string(con, chunk, data, size);
 
-	  char st[] = "INSERT INTO Images(Path, Image) VALUES('";
-	  
+	 char st1[] = "INSERT INTO Images(Path, Image) VALUES('";
+	  //printf("Doing string concatenation\n");
+	  char* st = calloc(1000,sizeof(char));
+	  strcpy(st,st1);
 	  strcat(st,path);
 	  strcat(st, "','%s');");
 	  
@@ -161,13 +166,15 @@ int insertImage(char *path){
 
 	  char query[st_len + 2*size+1]; 
 	  int len = snprintf(query, st_len + 2*size+1, st, chunk);
-
+	  fprintf(stderr,"query begin\n");
 	  if (mysql_real_query(con, query, len))
 	  {
 	    success=0;
 	  }
-
+fprintf(stderr,"query done\n");
 	  mysql_close(con);
+	  fprintf(stderr,"Closed connection\n");
 	}
+	//fclose(logfile);
  return success;
 }

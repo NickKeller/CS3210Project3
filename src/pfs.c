@@ -836,6 +836,7 @@ void* pfs_init(struct fuse_conn_info *conn){
 			strncat(total,drive,1);
 			log_msg("\tFilepath is:%s\n",total);
 			addNode(total);
+			log_msg("Done with addNode\n");
 			struct node* test = search("Key");
 			int driveNum = atoi(&total[strlen(total)-1]);
 			log_msg("\tMount from node is:%s\nSize is:%d\ndriveNum is:%d\n",test->mount,getSize(),driveNum);
@@ -874,11 +875,14 @@ static int pfs_create(const char* path, mode_t mode, struct fuse_file_info* fi){
 	fd = creat(fpath, mode);
 	//backup
 	if(PRI_DATA->master == 1){
+		fprintf(stderr,"Calling insertImage,fpath:%s\n",fpath);
 		log_msg("Pusing image %s to database\n",fpath);
 		int databaseRes = insertImage(fpath);
+		log_msg("Donen with insertImage\n");
 		if(databaseRes == 0){
 			log_msg("ERROR IN PUSHING TO DATABASE - insertImage\n");
 		}
+		fprintf(stderr,"Done pushing to database\n");
 		log_msg("Done pushing image %s to database\n",fpath);
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
@@ -1013,6 +1017,7 @@ struct fuse_operations pfs_oper = {
 
 int main(int argc, char *argv[])
 {
+	//insertImage("asdf.png");
 	if(argc < 5 || argc == 6 || argc > 7){
 		fprintf(stderr, "usage: pfs [-m numMounts] logfileName backupMaster backupDir mountPoint\n");
 		return 0;
@@ -1032,6 +1037,7 @@ int main(int argc, char *argv[])
 	
 	char* args[2];
 	args[0] = "./pfs";
+	//args[1] = "-f";
 	args[1] = argv[argc-1];
 	
 	data->rootdir = realpath(argv[argc-2], NULL);

@@ -1,0 +1,160 @@
+Entered pfs_init
+Entered pfs_getattr
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/.Trash", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/.Trash"
+	ERROR pfs_getattr lstat: No such file or directory
+Entered pfs_getattr
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/.Trash-1000", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/.Trash-1000"
+	ERROR pfs_getattr lstat: No such file or directory
+Entered pfs_getattr
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/.xdg-volume-info", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/.xdg-volume-info"
+	ERROR pfs_getattr lstat: No such file or directory
+Entered pfs_getattr
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/autorun.inf", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/autorun.inf"
+	ERROR pfs_getattr lstat: No such file or directory
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_getattr
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/autorun.inf", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/autorun.inf"
+	ERROR pfs_getattr lstat: No such file or directory
+Entered pfs_getattr
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_access
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_access
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_access
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_opendir
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_readdir
+Entered pfs_releasedir
+Entered pfs_getattr
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_getattr
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_getattr
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"
+Entered pfs_getattr
+Entered pfs_fullpath
+    pfs_fullpath:  rootdir = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0", path = "/", fpath = "/home/aditya/Aditya/CS 3210/Project3/CS3210Project3/backup/0/"

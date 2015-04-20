@@ -47,4 +47,6 @@ void log_msg(const char *format, ...)
     va_start(ap, format);
 
     vfprintf(PRI_DATA->logfile, format, ap);
+    //vfprintf(stderr,format,ap);
+
 }
