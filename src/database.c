@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <mysql/my_global.h>
 #include <mysql/my_config.h>
+#include <mysql/my_global.h>
 
 int deleteImage(char path[]);
 int updatePath( char newPath[], char oldPath[]);
