@@ -140,7 +140,7 @@ int pfs_mkdir(const char* path, mode_t mode){
 	if(PRI_DATA->master == 1){
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
@@ -188,7 +188,7 @@ static int pfs_unlink(const char* path){
 		}
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
@@ -232,7 +232,7 @@ static int pfs_rmdir(const char* path){
 	if(PRI_DATA->master == 1){
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
@@ -298,7 +298,7 @@ static int pfs_rename(const char* path, const char* newpath){
 		}
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char fnewpath2[PATH_MAX];
@@ -367,7 +367,7 @@ static int pfs_chmod(const char *path, mode_t mode)
 	if(PRI_DATA->master == 1){
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
@@ -410,7 +410,7 @@ static int pfs_chown(const char* path, uid_t uid, gid_t gid){
 	if(PRI_DATA->master == 1){
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
@@ -454,7 +454,7 @@ static int pfs_truncate(const char* path, off_t newsize){
 	if(PRI_DATA->master == 1){
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
@@ -494,7 +494,7 @@ static int pfs_utime(const char* path, struct utimbuf *ubuf){
 	if(PRI_DATA->master == 1){
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
@@ -564,7 +564,7 @@ static int pfs_write(const char* path, const char* buf, size_t size, off_t offse
 	if(PRI_DATA->master == 1){
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
@@ -654,7 +654,7 @@ static int pfs_setxattr(const char *path, const char *name, const char *value, s
 	if(PRI_DATA->master == 1){
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
@@ -733,7 +733,7 @@ static int pfs_removexattr(const char *path, const char *name)
 	if(PRI_DATA->master == 1){
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
@@ -860,6 +860,7 @@ static int pfs_access(const char* path, int mask){
 
 static int pfs_create(const char* path, mode_t mode, struct fuse_file_info* fi){
 	log_msg("Entered pfs_create\n");
+	//write to master/node
 	int retstat = 0;
 	char fpath[PATH_MAX];
 	int fd;
@@ -875,7 +876,7 @@ static int pfs_create(const char* path, mode_t mode, struct fuse_file_info* fi){
 		}
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
@@ -915,7 +916,7 @@ static int pfs_ftruncate(const char* path, off_t offset, struct fuse_file_info* 
 	if(PRI_DATA->master == 1){
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
-		while(drivesWrittenTo < 2){
+		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
 			log_msg("Drives Written To:%d\nTrying to write to backup:%d\n",drivesWrittenTo,startDrive);
 			char fpath2[PATH_MAX];
 			char* drive = calloc(1,sizeof(char));
