@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "hash.h"
+
+#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8) +(uint32_t)(((const uint8_t *)(d))[0]))
+
 
 unsigned long hashFunction(char *str);
 void addNode(char *mount);
@@ -16,7 +20,6 @@ struct node
 
 struct node *head;
 int size = 0;
-
 
 void addNode(char *mount)
 {
@@ -128,6 +131,44 @@ unsigned long hashFunction(char *str)
     while (c = *str++)
         hash = c + (hash << 6) + (hash << 16) - hash;
 
+    unsigned long tmp, len;
+    int rem;
+    len = 4;
+
+
+    /* Main loop */
+    for (;len > 0; len--) {
+        hash  += get16bits (str);
+        tmp    = (get16bits (str+2) << 11) ^ hash;
+        hash   = (hash << 16) ^ tmp;
+        str  += 2*sizeof (uint16_t);
+        hash  += hash >> 11;
+    }
+
+    /* Handle end cases */
+    switch (rem) {
+        case 3: hash += get16bits (str);
+                hash ^= hash << 16;
+                hash ^= ((signed char)str[sizeof (uint16_t)]) << 18;
+                hash += hash >> 11;
+                break;
+        case 2: hash += get16bits (str);
+                hash ^= hash << 11;
+                hash += hash >> 17;
+                break;
+        case 1: hash += (signed char)*str;
+                hash ^= hash << 10;
+                hash += hash >> 1;
+    }
+
+    /* Force "avalanching" of final 127 bits */
+    hash ^= hash << 3;
+    hash += hash >> 5;
+    hash ^= hash << 4;
+    hash += hash >> 17;
+    hash ^= hash << 25;
+    hash += hash >> 6;
+
     return hash;
 }
 
@@ -144,3 +185,7 @@ void printList()
     }
 
 }
+
+
+
+
