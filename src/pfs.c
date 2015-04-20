@@ -182,10 +182,12 @@ static int pfs_unlink(const char* path){
 	retstat = unlink(fpath);
 	//backup
 	if(PRI_DATA->master == 1){
+		log_msg("Deleting image %s from database\n",fpath);
 		int databaseRes = deleteImage(fpath);
 		if(databaseRes == 0){
 			log_msg("ERROR IN PUSHING TO DATABASE - deleteImage\n");
 		}
+		log_msg("Done deleting image %s from database\n",fpath);
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
 		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
@@ -292,10 +294,12 @@ static int pfs_rename(const char* path, const char* newpath){
 	//backup
 	if(PRI_DATA->master == 1){
 		//update database
+		log_msg("Updating path: %s\nNewPath:%s\n",fpath,fnewpath);
 		int databaseRes = updatePath(fnewpath,fpath);
 		if (databaseRes == 0){
 			log_msg("ERROR IN PUSHING TO DATABASE - updatePath\n");
 		}
+		log_msg("Done updating path\n");
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
 		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
@@ -870,10 +874,12 @@ static int pfs_create(const char* path, mode_t mode, struct fuse_file_info* fi){
 	fd = creat(fpath, mode);
 	//backup
 	if(PRI_DATA->master == 1){
+		log_msg("Pusing image %s to database\n",fpath);
 		int databaseRes = insertImage(fpath);
 		if(databaseRes == 0){
 			log_msg("ERROR IN PUSHING TO DATABASE - insertImage\n");
 		}
+		log_msg("Done pushing image %s to database\n",fpath);
 		int startDrive = mapNameToDrives(path);
 		int drivesWrittenTo = 0;
 		while(drivesWrittenTo < (PRI_DATA->numMounts - 2)){
