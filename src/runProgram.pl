@@ -31,7 +31,8 @@ sub unmountAndDestroy{
 	`fusermount -u ~/MyPFS`;
 	`rm -rf ../backup/`;
 	`rm -rf ~/MyPFS/`;
-	`rm -f pfsmaster.log`;
+	`rm -f *.log`;
+	`make clean`;
 }
 
 sub mountDrives{
